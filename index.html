@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live AQI Map - India</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-left: 10px;
+            margin-bottom: 10px;
+        }
+
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 5px;
+        }
+
+        #map {
+            height: 600px;
+            width: 70%;
+            position: relative;
+            font-size: 12px;
+        }
+
+        #aqi-table {
+            width: 28%;
+            margin-top: 5px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        #aqi-table h2 {
+            text-align: center;
+        }
+
+        #aqi-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #aqi-table th,
+        #aqi-table td {
+            padding: 5px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #aqi-table th {
+            background-color: #f2f2f2;
+        }
+
+        .legend {
+            position: absolute;
+            height: 30%;
+            width: 25vw;
+            bottom: 30px;
+            left: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            font-size: 1vw;
+        }
+
+        .legend h4 {
+            margin: 0.1rem;
+            font-size: 1.7vw;
+            font-weight: bold;
+        }
+
+        .legend div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+
+        .legend div span {
+            display: inline-block;
+            width: 1vw;
+            height: 1vw;
+            margin-right: 8px;
+            margin-bottom: 1px;
+            border-radius: 3px;
+            font-size: 1lvw;
+        }
+
+        .aqi-good {
+            background-color: green;
+        }
+
+        .aqi-moderate {
+            background-color: yellow;
+        }
+
+        .aqi-unhealthy-sg {
+            background-color: orange;
+        }
+
+        .aqi-unhealthy {
+            background-color: red;
+        }
+
+        .aqi-very-unhealthy {
+            background-color: purple;
+        }
+
+        .aqi-hazardous {
+            background-color: maroon;
+        }
+
+        @media (max-width: 768px) {
+            #map {
+                width: 100%; /* Map takes full width on smaller screens */
+                height: 400px;
+            }
+
+            #aqi-table {
+                width: 100%; /* Table also takes full width */
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Live Air Quality Index (AQI) Map - India</h1>
+    <div class="main">
+        <div id="map">
+            <div class="legend">
+                <h4>AQI Scale</h4>
+                <div><span class="aqi-good"></span>Good (0-50)</div>
+                <div><span class="aqi-moderate"></span>Moderate (51-100)</div>
+                <div><span class="aqi-unhealthy-sg"></span>Unhealthy for Sensitive Groups (101-150)</div>
+                <div><span class="aqi-unhealthy"></span>Unhealthy (151-200)</div>
+                <div><span class="aqi-very-unhealthy"></span>Very Unhealthy (201-300)</div>
+                <div><span class="aqi-hazardous"></span>Hazardous (301+)</div>
+            </div>
+        </div>
+
+        <div id="aqi-table">
+            <h2>AQI Data</h2>
+            <table id="table-data">
+                <thead>
+                    <tr>
+                        <th>City</th>
+                        <th>AQI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- AQI Data Rows will be added dynamically here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([20.5937, 78.9629], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        function getAQIColor(aqi) {
+            if (aqi <= 50) return "green";
+            else if (aqi <= 100) return "yellow";
+            else if (aqi <= 150) return "orange";
+            else if (aqi <= 200) return "red";
+            else if (aqi <= 300) return "purple";
+            else return "maroon";
+        }
+
+        const cities = [
+            { name: "Delhi", coords: [28.6139, 77.2090] },
+            { name: "Mumbai", coords: [19.0760, 72.8777] },
+            { name: "Bangalore", coords: [12.9716, 77.5946] },
+            { name: "Chennai", coords: [13.0827, 80.2707] },
+            { name: "Kolkata", coords: [22.5726, 88.3639] },
+            { name: "Hyderabad", coords: [17.3850, 78.4867] },
+            { name: "Pune", coords: [18.5204, 73.8567] },
+            { name: "Ahmedabad", coords: [23.0225, 72.5714] },
+            { name: "Jaipur", coords: [26.9124, 75.7873] },
+            { name: "Surat", coords: [21.1702, 72.8311] },
+            { name: "Lucknow", coords: [26.8467, 80.9462] },
+            { name: "Chandigarh", coords: [30.7333, 76.7794] },
+            { name: "Indore", coords: [22.7196, 75.8577] },
+            { name: "Bhopal", coords: [23.2599, 77.4126] },
+            { name: "Kochi", coords: [9.9312, 76.2673] },
+            { name: "Dehradun", coords: [30.3165, 78.0322] }
+        ];
+
+        const apiToken = "70fc55fcbd017e0f695a18d95728c6ef3c049df0";
+
+        cities.forEach(city => {
+            fetch(`https://api.waqi.info/feed/geo:${city.coords[0]};${city.coords[1]}/?token=${apiToken}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "ok") {
+                        const aqi = data.data.aqi;
+                        const color = getAQIColor(aqi);
+
+                        var circle = L.circle(city.coords, {
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.5,
+                            radius: 15000
+                        }).addTo(map);
+
+                        circle.bindPopup(`<strong>${city.name}</strong><br>AQI: ${aqi}`);
+
+                        // Update AQI table
+                        const table = document.getElementById("table-data").getElementsByTagName('tbody')[0];
+                        const newRow = table.insertRow();
+                        const cityCell = newRow.insertCell(0);
+                        const aqiCell = newRow.insertCell(1);
+
+                        cityCell.textContent = city.name;
+                        aqiCell.textContent = aqi;
+                        aqiCell.style.backgroundColor = color;
+                    } else {
+                        console.error(`Error fetching AQI data for ${city.name}`);
+                    }
+                })
+                .catch(error => console.error("Error fetching AQI data:", error));
+        });
+    </script>
+
+</body>
+
+</html>
