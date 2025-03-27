@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live AQI Map - India</title>
+    <title>Live AQI & Weather Map - India</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         body {
@@ -32,6 +32,7 @@
             font-size: 12px;
         }
 
+
         #aqi-table {
             width: 28%;
             margin-top: 5px;
@@ -54,12 +55,17 @@
         #aqi-table th,
         #aqi-table td {
             padding: 5px;
-            text-align: left;
+            text-align: center;
             border-bottom: 1px solid #ddd;
         }
 
         #aqi-table th {
             background-color: #f2f2f2;
+        }
+
+        .leaflet-tooltip {
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .legend {
@@ -123,12 +129,14 @@
 
         @media (max-width: 768px) {
             #map {
-                width: 100%; /* Map takes full width on smaller screens */
+                width: 100%;
+                /* Map takes full width on smaller screens */
                 height: 400px;
             }
 
             #aqi-table {
-                width: 100%; /* Table also takes full width */
+                width: 100%;
+                /* Table also takes full width */
                 margin-top: 10px;
             }
         }
@@ -157,16 +165,18 @@
         </div>
 
         <div id="aqi-table">
-            <h2>AQI Data</h2>
+            <h2>AQI & Weather Data</h2>
             <table id="table-data">
                 <thead>
                     <tr>
                         <th>City</th>
                         <th>AQI</th>
+                        <th>Temperature</th>
+                        <th>Weather</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- AQI Data Rows will be added dynamically here -->
+                    <!-- AQI and Weather Data Rows will be added dynamically here -->
                 </tbody>
             </table>
         </div>
@@ -210,13 +220,21 @@
         ];
 
         const apiToken = "70fc55fcbd017e0f695a18d95728c6ef3c049df0";
+        const weatherApiKey = "cc5344ea96aa0885a0e77ea57860e823";
 
         cities.forEach(city => {
-            fetch(`https://api.waqi.info/feed/geo:${city.coords[0]};${city.coords[1]}/?token=${apiToken}`)
-                .then(response => response.json())
+            // Fetch both AQI and Weather data concurrently
+            Promise.all([
+                fetch(`https://api.waqi.info/feed/geo:${city.coords[0]};${city.coords[1]}/?token=${apiToken}`),
+                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${city.coords[0]}&lon=${city.coords[1]}&appid=${weatherApiKey}`)
+            ])
+                .then(responses => Promise.all(responses.map(response => response.json()))) // Parse all responses as JSON
                 .then(data => {
-                    if (data.status === "ok") {
-                        const aqi = data.data.aqi;
+                    const aqiData = data[0]; // First API response (AQI)
+                    const weatherData = data[1]; // Second API response (Weather)
+
+                    if (aqiData.status === "ok") {
+                        const aqi = aqiData.data.aqi;
                         const color = getAQIColor(aqi);
 
                         var circle = L.circle(city.coords, {
@@ -226,12 +244,13 @@
                             radius: 15000
                         }).addTo(map);
 
-                        circle.bindPopup(`<strong>${city.name}</strong><br>AQI: ${aqi}`);
+                        circle.bindPopup(`<strong>${city.name}</strong><br> AQI: ${aqi}<br>Temperature: ${(weatherData.main.temp - 273.15).toFixed(1)}°C<br> Weather: ${weatherData.weather[0].description}`);
 
                         // Add hover tooltip
-                        circle.bindTooltip(`AQI: ${aqi}`, {
+                        circle.bindTooltip(`AQI: ${aqi}<br>Temperature: ${(weatherData.main.temp - 273.15).toFixed(1)}°C<br>Weather: ${weatherData.weather[0].description}`, {
                             permanent: false,
-                            direction: "top"
+                            direction: "top",
+                            radius: 20000
                         });
 
                         // Update AQI table
@@ -239,10 +258,16 @@
                         const newRow = table.insertRow();
                         const cityCell = newRow.insertCell(0);
                         const aqiCell = newRow.insertCell(1);
+                        const tempCell = newRow.insertCell(2);
+                        const weatherCell = newRow.insertCell(3);
+
 
                         cityCell.textContent = city.name;
                         aqiCell.textContent = aqi;
                         aqiCell.style.backgroundColor = color;
+                        tempCell.textContent = `${(weatherData.main.temp - 273.15).toFixed(1)}°C`;
+                        weatherCell.textContent = `${weatherData.weather[0].description}`;
+
                     } else {
                         console.error(`Error fetching AQI data for ${city.name}`);
                     }
