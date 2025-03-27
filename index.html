@@ -21,7 +21,7 @@
         .main {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
+            justify-content: center;
             padding: 5px;
         }
 
@@ -64,8 +64,8 @@
 
         .legend {
             position: absolute;
-            height: 30%;
-            width: 25vw;
+            height: auto;
+            width: auto;
             bottom: 30px;
             left: 10px;
             padding: 10px;
@@ -73,12 +73,12 @@
             border-radius: 5px;
             box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
             z-index: 1000;
-            font-size: 1vw;
+            font-size: 0.9em;
         }
 
         .legend h4 {
             margin: 0.1rem;
-            font-size: 1.7vw;
+            font-size: 1.2em;
             font-weight: bold;
         }
 
@@ -90,12 +90,11 @@
 
         .legend div span {
             display: inline-block;
-            width: 1vw;
-            height: 1vw;
+            width: 1em;
+            height: 1em;
             margin-right: 8px;
             margin-bottom: 1px;
             border-radius: 3px;
-            font-size: 1lvw;
         }
 
         .aqi-good {
@@ -132,6 +131,11 @@
                 width: 100%; /* Table also takes full width */
                 margin-top: 10px;
             }
+        }
+
+        .leaflet-tooltip {
+            font-size: 14px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -223,6 +227,12 @@
                         }).addTo(map);
 
                         circle.bindPopup(`<strong>${city.name}</strong><br>AQI: ${aqi}`);
+
+                        // Add hover tooltip
+                        circle.bindTooltip(`AQI: ${aqi}`, {
+                            permanent: false,
+                            direction: "top"
+                        });
 
                         // Update AQI table
                         const table = document.getElementById("table-data").getElementsByTagName('tbody')[0];
