@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live AQI & Weather Map - India</title>
+    <title>Live AQI & Weather Data Map - India</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         body {
@@ -16,6 +16,7 @@
         h1 {
             margin-left: 10px;
             margin-bottom: 10px;
+            text-align: center;
         }
 
         .main {
@@ -27,14 +28,18 @@
 
         #map {
             height: 600px;
-            width: 70%;
+            width: 65%;
             position: relative;
             font-size: 12px;
+            margin-top: 5px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
         }
 
-
         #aqi-table {
-            width: 28%;
+            width: 33%;
             margin-top: 5px;
             padding: 5px;
             border: 1px solid #ddd;
@@ -150,7 +155,7 @@
 
 <body>
 
-    <h1>Live Air Quality Index (AQI) Map - India</h1>
+    <h1>Live Air Quality Index (AQI) & Weather Data - India</h1>
     <div class="main">
         <div id="map">
             <div class="legend">
