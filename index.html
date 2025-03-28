@@ -238,7 +238,7 @@
                     const aqiData = data[0]; // First API response (AQI)
                     const weatherData = data[1]; // Second API response (Weather)
 
-                    if (aqiData.status === "ok") {
+                    if (aqiData.status === "ok" && weatherData.cod === 200) {
                         const aqi = aqiData.data.aqi;
                         const color = getAQIColor(aqi);
 
